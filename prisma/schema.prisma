@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  token    String @unique
+  password String @default("")
+
+  account Account?
+  jwt     JwtTokens[]
+}
+
+model Account {
+  id       Int    @id @default(autoincrement())
+  username String
+  position Roles  @default(Lead)
+  online   Int    @default(0)
+
+  owner   User @relation(fields: [ownerId], references: [id])
+  ownerId Int  @unique
+}
+
+model JwtTokens {
+  id    Int     @id @default(autoincrement())
+  jwt   String  @unique
+  block Boolean @default(false)
+
+  owner   User @relation(fields: [ownerId], references: [id])
+  ownerId Int
+}
+
+model Unit {
+  id         Int       @id @default(autoincrement())
+  mark       String    @unique
+  department Int
+  operation  Operation @default(Free)
+  comment    String?
+
+  tactical   Tactical? @relation(fields: [tacticalId], references: [id])
+  tacticalId Int?
+
+  Incident   Incident? @relation(fields: [incidentId], references: [id])
+  incidentId Int?
+}
+
+model Incident {
+  id          Int      @id @default(autoincrement())
+  brief       String
+  description String
+  location    String
+  priority    Priority
+  commander   Int?
+
+  units Unit[]
+}
+
+model Tactical {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  brief       String?
+  description String?
+  status      TacticalStatus? @default(Formation)
+  commander   Int?
+
+  units Unit[]
+}
+
+model Bolo {
+  id          Int      @id @default(autoincrement())
+  description String
+  risk        Priority
+}
+
+model Mark {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId Int
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  marks Mark[]
+}
+
+model Log {
+  id    Int     @id @default(autoincrement())
+  date  Int
+  route String
+  body  String?
+  code  Int
+  agent String? @default("Unknown user-agent")
+  ip    String?
+}
+
+enum Roles {
+  Developer
+  Technical
+  Executive
+  Operation
+  Community
+  Control
+  Chief
+  Commander
+  Supervisor
+  Lead
+  Probationary
+}
+
+enum Availability {
+  Available
+  Unavailable
+}
+
+enum Operation {
+  Free
+  Break
+  Busy
+  Escorting
+  Channel
+  Scene
+  Unknown
+}
+
+enum TacticalStatus {
+  Formation
+  Process
+  Ending
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+  Extreme
+}
